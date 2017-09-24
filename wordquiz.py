@@ -7,7 +7,7 @@ import sys
 import time
 
 repetitions = 1
-quizSize = 5
+quizSize = 10
 
 if not "DEBUG" in os.environ:
     sys.tracebacklimit = 0
@@ -38,12 +38,7 @@ def waitKey():
         termios.tcsetattr(fd, termios.TCSANOW, newattr)
         try:
             result = sys.stdin.read(1)
-            time.sleep(0.5)
-            print("result: " + str(result))
-            time.sleep(1)
         except IOError:
-            print("Error!")
-            time.sleep(1)
             pass
         finally:
             termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
@@ -64,7 +59,17 @@ def setRowCol(row, col):
 
 def readWordList(filename):
     print "reading file " + filename
-    return map(lambda line: tuple(line.split()), open(filename, "r").readlines())
+    lines = open(filename, "r").readlines()
+    filtered = []
+    for (nr, line) in enumerate(lines):
+        if line.startswith('#'):
+            continue
+        if line.startswith('!'):
+            filtered.extend(map(lambda line: tuple(line.split()), eval(line[1:])))
+            continue
+        filtered.append(tuple(line.split()))
+
+    return filtered
 
 
 def writeWordList(filename, list):
@@ -81,7 +86,7 @@ def makeQuiz(wordList, count):
     quiz = list(set(random.sample(wordList, count)))
 
     # Due to duplicates from the weighted list, we may have fewer words than
-    # needed, so add more words from the unused words in the  unique list.
+    # needed, so add more words from the unused words in the unique list.
     quiz.extend(random.sample(list(uniqueWords.difference(set(quiz))),
                               count - len(quiz)))
 
@@ -152,8 +157,6 @@ def learnFile(filename):
     wordList = list(set(readWordList(filename)))
 
     if os.path.isfile(savename):
-        print("Resuming progress for " + filename)
-        time.sleep(0.5)
         wordsToLearn = readWordList(savename)
         os.remove(savename)
     else:
