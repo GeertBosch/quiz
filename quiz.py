@@ -6,7 +6,13 @@ import random
 import sys
 import time
 
+# The number of times each question needs to be answered correctly
 repetitions = 1
+
+# The number of times a question needs to be answered correctly after a mistake
+errorRepetitions = 3
+
+# The number of questions per screen.
 quizSize = 10
 
 if not "DEBUG" in os.environ:
@@ -59,15 +65,18 @@ def setRowCol(row, col):
 
 def readWordList(filename):
     print "reading file " + filename
-    lines = open(filename, "r").readlines()
+    lines = open(filename, "r").read().splitlines()
     filtered = []
     for (nr, line) in enumerate(lines):
         if line.startswith('#'):
-            continue
-        if line.startswith('!'):
-            filtered.extend(map(lambda line: tuple(line.split()), eval(line[1:])))
-            continue
-        filtered.append(tuple(line.split()))
+            pass
+        elif line.startswith('!'):
+            filtered.extend(
+                map(lambda line: tuple(line.split()), eval(line[1:])))
+        elif line.startswith('say: '):
+            filtered.append(tuple(['say:', line[5:]]))
+        else:
+            filtered.append(tuple(line.split()))
 
     return filtered
 
@@ -95,7 +104,14 @@ def makeQuiz(wordList, count):
 
 def askOne(pair):
     print('')
-    answer = raw_input(setCol(17) + pair[0] + setCol(41) + '? ')
+    if pair[0] == "say:":
+        os.system('say -v Samantha "%s"' % pair[1])
+        time.sleep(0.2)
+        os.system('say -v Ava "%s"' % pair[1])
+        time.sleep(0.2)
+        answer = raw_input(setCol(41) + '? ')
+    else:
+        answer = raw_input(setCol(17) + pair[0] + setCol(41) + '? ')
     correct = answer == pair[1]
     if correct:
         print(CSI('F') + setCol(41) + '  ' + answer)
@@ -117,8 +133,9 @@ def takeQuiz(quiz):
 
 
 def showStats(wordList, wordsToLearn):
-    pctLearned = 100 - len(wordsToLearn) * 100 / (repetitions * len(wordList))
-    print(setRowCol(2, 60) + '  Words: {:3d}'.format(len(wordList)))
+    pctLearned = max(0, 100 - len(wordsToLearn) * 100 /
+                     (repetitions * len(wordList)))
+    print(setRowCol(2, 60) + '  Facts: {:3d}'.format(len(wordList)))
     print(setRowCol(3, 60) + 'Learned: {:3.0f}%'.format(pctLearned))
 
 
@@ -136,7 +153,7 @@ def learnWords(wordList, wordsToLearn):
             else:
                 while item[0] in wordsToLearn:
                     wordsToLearn.remove(item[0])
-                wordsToLearn.extend(repetitions * [item[0]])
+                wordsToLearn.extend(errorRepetitions * [item[0]])
 
         showStats(wordList, wordsToLearn)
 
@@ -149,7 +166,6 @@ def learnWords(wordList, wordsToLearn):
 
         print(setRowCol(10 + quizSize * 2, 17) + msg)
         waitKey()
-        # raw_input(setRowCol(10 + quizSize * 2, 17) + msg)
 
 
 def learnFile(filename):
@@ -175,6 +191,10 @@ def learnFile(filename):
 
     return True
 
+
+if len(sys.argv) <= 1:
+    print("Usage: %s filename.quiz") % os.path.basename(sys.argv[0])
+    exit(2)
 
 for filename in (sys.argv[1:] if len(sys.argv) > 1 else ["wordList.txt"]):
     if not learnFile(filename):
