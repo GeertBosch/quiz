@@ -73,6 +73,10 @@ def readWordList(filename):
         elif line.startswith('!'):
             filtered.extend(
                 map(lambda line: tuple(line.split()), eval(line[1:])))
+        elif line.startswith('say: "'):
+            pos = line.find('" ', 6)
+            pos = (6 if pos < 0 else pos + 1)
+            filtered.append(tuple([line[:pos], line[pos + 1:]]))
         elif line.startswith('say: '):
             filtered.append(tuple(['say:', line[5:]]))
         else:
@@ -104,8 +108,9 @@ def makeQuiz(wordList, count):
 
 def askOne(pair):
     print('')
-    if pair[0] == "say:":
-        os.system('say -v Samantha "%s"' % pair[1])
+    if pair[0] == "say:" or pair[0].startswith('say: "'):
+        prompt = (pair[1] if pair[0] == "say:" else pair[0][5:])
+        os.system('say -v Samantha "%s"' % prompt)
         time.sleep(0.2)
         os.system('say -v Ava "%s"' % pair[1])
         time.sleep(0.2)
