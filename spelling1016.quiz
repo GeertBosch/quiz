@@ -1,0 +1,25 @@
+#!/usr/bin/env python ./quiz.py
+# Class 4-322 Spelling Words for the week of 10/02/2017
+say: "were, as in: we were happy" were
+say: when
+say: "where, as in: where are my socks" where
+say: which
+say: who
+say: whole
+say: won
+say: won't
+say: wouldn't
+say: "your, as in: I like your work" your
+say: "you're, as in: you're a rock star" you're
+say: January
+say: February
+say: March
+say: April
+say: May
+say: June
+say: July
+say: August
+say: September
+say: October
+say: November
+say: December
